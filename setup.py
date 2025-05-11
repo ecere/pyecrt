@@ -33,6 +33,7 @@ pymodule = '_pyecrt' + sysconfig.get_config_var('EXT_SUFFIX')
 artifacts_dir = os.path.join('artifacts', platform)
 lib_dir = os.path.join(eC_dir, 'obj', platform, dll_dir)
 
+make_cmd = 'mingw32-make' if platform == 'win32' else 'make'
 
 def prepare_package_dir(src_files, dest_dir):
     os.makedirs(dest_dir, exist_ok=True)
@@ -45,8 +46,8 @@ def prepare_package_dir(src_files, dest_dir):
 def build_package():
    try:
       if not os.path.exists(artifacts_dir):
-         subprocess.check_call(['make', f'-j{cpu_count}', 'SKIP_SONAME=y'], cwd=eC_dir)
-         subprocess.check_call(['make', f'-j{cpu_count}', 'SKIP_SONAME=y'], cwd=eC_c_dir)
+         subprocess.check_call([make_cmd, f'-j{cpu_count}', 'SKIP_SONAME=y'], cwd=eC_dir)
+         subprocess.check_call([make_cmd, f'-j{cpu_count}', 'SKIP_SONAME=y'], cwd=eC_c_dir)
          prepare_package_dir([
             (os.path.join(lib_dir, dll_prefix + 'ecrt' + dll_ext), os.path.join(dll_dir, dll_prefix + 'ecrt' + dll_ext)),
             #(os.path.join(lib_dir, dll_prefix + 'ecrt_c' + dll_ext), os.path.join(dll_dir, dll_prefix + 'ecrt_c' + dll_ext)),
@@ -72,8 +73,8 @@ class egg_info_with_build(egg_info):
         super().run()
 
 lib_files = [
-   'libecrt' + dll_ext,
-#   'libecrt_c' + dll_ext,
+   dll_prefix + 'ecrt' + dll_ext,
+#  dll_prefix + 'ecrt_c' + dll_ext,
 ]
 
 
@@ -87,7 +88,7 @@ if 'sdist' in commands:
    cffi_modules = []
 else:
    packages=['ecrt', 'ecrt.lib']
-   package_dir={'ecrt': artifacts_dir, 'ecrt.lib': os.path.join(artifacts_dir, 'lib')}
+   package_dir={'ecrt': artifacts_dir, 'ecrt.lib': os.path.join(artifacts_dir, dll_dir)}
    #package_data={'ecrt': [ pymodule_filename, 'ecrt.py' ], 'ecrt.lib': lib_files}
    package_data={'ecrt': [ 'ecrt.py' ], 'ecrt.lib': lib_files}
    cmdclass={'build': build_with_make, 'egg_info': egg_info_with_build }
