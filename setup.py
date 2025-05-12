@@ -7,8 +7,25 @@ import os
 import sys
 import shutil
 import sysconfig
-
 from os import path
+import platform as clash_platform
+import distutils.ccompiler
+from distutils.command.build_ext import build_ext
+
+pkg_version       = '0.0.1'
+
+env = os.environ.copy()
+
+if sys.platform.startswith('win'):
+   def get_mingw(plat=None):
+       return 'mingw32'
+
+   distutils.ccompiler.get_default_compiler = get_mingw
+
+   if clash_platform.architecture()[0] == '64bit':
+      # Ensure ProgramFiles(x86) is set
+      if 'ProgramFiles(x86)' not in env:
+         env['ProgramFiles(x86)'] = r"C:\Program Files (x86)"
 
 dir = os.path.dirname(__file__)
 if dir == '':
@@ -17,8 +34,6 @@ else:
    rwd = os.path.abspath(dir)
 with open(os.path.join(rwd, 'README.md'), encoding='u8') as f:
    long_description = f.read()
-
-pkg_version       = '0.0.1'
 
 cpu_count = multiprocessing.cpu_count()
 eC_dir = os.path.join(os.path.dirname(__file__), 'eC')
@@ -46,8 +61,9 @@ def prepare_package_dir(src_files, dest_dir):
 def build_package():
    try:
       if not os.path.exists(artifacts_dir):
-         subprocess.check_call([make_cmd, f'-j{cpu_count}', 'SKIP_SONAME=y'], cwd=eC_dir)
-         subprocess.check_call([make_cmd, f'-j{cpu_count}', 'SKIP_SONAME=y'], cwd=eC_c_dir)
+         # subprocess.check_call([make_cmd, f'troubleshoot'], cwd=eC_dir, env=env)
+         subprocess.check_call([make_cmd, f'-j{cpu_count}', 'SKIP_SONAME=y'], cwd=eC_dir, env=env)
+         subprocess.check_call([make_cmd, f'-j{cpu_count}', 'SKIP_SONAME=y'], cwd=eC_c_dir, env=env)
          prepare_package_dir([
             (os.path.join(lib_dir, dll_prefix + 'ecrt' + dll_ext), os.path.join(dll_dir, dll_prefix + 'ecrt' + dll_ext)),
             #(os.path.join(lib_dir, dll_prefix + 'ecrt_c' + dll_ext), os.path.join(dll_dir, dll_prefix + 'ecrt_c' + dll_ext)),
@@ -77,7 +93,6 @@ lib_files = [
 #  dll_prefix + 'ecrt_c' + dll_ext,
 ]
 
-
 commands = set(sys.argv)
 
 if 'sdist' in commands:
@@ -106,4 +121,6 @@ setup(
     include_package_data=True,
     ext_modules=[],
     cmdclass=cmdclass,
+    long_description=long_description,
+    long_description_content_type='text/markdown'
 )
