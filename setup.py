@@ -12,7 +12,7 @@ import platform as clash_platform
 import distutils.ccompiler
 from distutils.command.build_ext import build_ext
 
-pkg_version = '0.0.2'
+pkg_version = '0.0.1rc1'
 
 env = os.environ.copy()
 
