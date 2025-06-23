@@ -11,10 +11,17 @@ jobs:
         # os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-13, macos-latest]
         # os: [ubuntu-latest]
         # os: [windows-2019] #latest]
-        os: [ubuntu-latest, windows-2019, ubuntu-24.04-arm]
+        # os: [macos-latest]
+        os: [ubuntu-latest, windows-2019, ubuntu-24.04-arm, macos-latest]
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install bootstrap Python (macOS only)
+        if: runner.os == 'macOS'
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
 
       # Apply patch only on Windows
       - name: Apply header patch on Windows
