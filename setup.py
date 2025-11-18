@@ -1,6 +1,9 @@
 from setuptools import setup, Extension
 import multiprocessing
-from setuptools.command.build import build
+try:
+    from setuptools.command.build import build # Python 3.7+
+except ImportError:
+    from distutils.command.build import build  # Fallback for older Python (<3.7)
 from setuptools.command.egg_info import egg_info
 import subprocess
 import os
@@ -12,7 +15,12 @@ import platform as clash_platform
 import distutils.ccompiler
 from distutils.command.build_ext import build_ext
 
-pkg_version = '0.0.5'
+# Work around for CPython 3.6 on Windows
+if sys.platform.startswith("win") and sys.version_info[:2] == (3, 6):
+   import distutils.cygwinccompiler
+   distutils.cygwinccompiler.get_msvcr = lambda: [] # ["msvcr140"] -- we're building with MinGW-w64
+
+pkg_version = '0.0.6'
 
 env = os.environ.copy()
 
@@ -98,9 +106,9 @@ with open(os.path.join(rwd, 'README.md'), encoding='u8') as f:
    long_description = f.read()
 
 cpu_count = multiprocessing.cpu_count()
-eC_dir = os.path.join(os.path.dirname(__file__), 'eC')
-eC_c_dir = os.path.join(os.path.dirname(__file__), 'eC', 'bindings', 'c')
-eC_py_dir = os.path.join(os.path.dirname(__file__), 'eC', 'bindings', 'py')
+eC_dir = os.path.join(rwd, 'eC')
+eC_c_dir = os.path.join(rwd, 'eC', 'bindings', 'c')
+eC_py_dir = os.path.join(rwd, 'eC', 'bindings', 'py')
 platform = 'win32' if sys.platform.startswith('win') else ('apple' if sys.platform.startswith('darwin') else 'linux')
 dll_prefix = '' if platform == 'win32' else 'lib'
 dll_dir = 'bin' if platform == 'win32' else 'lib'
@@ -185,7 +193,8 @@ setup(
     name='ecrt',
     version=pkg_version,
     cffi_modules=cffi_modules,
-    setup_requires=['cffi >= 1.0.0'],
+    # setup_requires is deprecated -- build dependencies must now be specified in pyproject.toml
+    # setup_requires=['cffi >= 1.0.0'],
     install_requires=['cffi >= 1.0.0'],
     packages=packages,
     package_dir=package_dir,
