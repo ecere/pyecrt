@@ -20,7 +20,7 @@ if sys.platform.startswith("win") and sys.version_info[:2] == (3, 6):
    import distutils.cygwinccompiler
    distutils.cygwinccompiler.get_msvcr = lambda: [] # ["msvcr140"] -- we're building with MinGW-w64
 
-pkg_version = '0.0.6'
+pkg_version = '0.0.7rc1'
 
 env = os.environ.copy()
 
@@ -134,7 +134,14 @@ def build_package():
          #subprocess.check_call(['gcc', '-v', '-m32'], cwd=eC_dir, env=env)
          #subprocess.check_call(['gcc', '-print-sysroot', '-m32'], cwd=eC_dir, env=env)
          #subprocess.check_call([make_cmd, f'troubleshoot'], cwd=eC_dir, env=env)
+
+         archflags = env.get("ARCHFLAGS", None)
          make_and_args = [make_cmd, f'-j{cpu_count}', 'SKIP_SONAME=y'] #, 'V=1']
+         if archflags is not None:
+            # This will add arm64 architecture flags for macos-latest
+            make_and_args.append('CFLAGS=' + archflags)
+            make_and_args.append('LDFLAGS=' + archflags)
+
          if cc_override is not None:
             make_and_args.extend(cc_override)
 
